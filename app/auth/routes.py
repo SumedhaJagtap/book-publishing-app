@@ -1,11 +1,14 @@
 from flask import render_template, request,flash,redirect,url_for
-from flask_login import login_user,logout_user,login_required
+from flask_login import login_user,logout_user,login_required,current_user
 from app.auth import auth_bp
 from app.auth.forms import RegistrationForm,LoginForm
 from app.auth.models import User
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register_user():
+    if current_user.is_authenticated:
+        flash('You are already signed-in')
+        return redirect(url_for('catalog_bp.display_books'))
 
     form = RegistrationForm()
     if form.validate_on_submit():
@@ -20,6 +23,10 @@ def register_user():
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def signin_user():
+    if current_user.is_authenticated:
+        flash('You are already signed-in')
+        return redirect(url_for('catalog_bp.display_books'))
+
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(user_email=form.email.data).first()
@@ -35,3 +42,8 @@ def signin_user():
 def signout_user():
     logout_user()
     return redirect(url_for('catalog_bp.display_books'))
+
+
+@auth_bp.app_errorhandler(404)
+def page_not_found(error):
+    return render_template('404.html'),404
